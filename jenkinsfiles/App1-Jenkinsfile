@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+    stages {
+        stage('SCM Checkout') {
+            
+            steps {
+                   git branch: '${git_branch}', credentialsId: '2c8ee9e0-6907-4525-88f7-1ebc505f89a0', url: 'https://github.com/sugandhpasricha/springboot-1.git'
+        }
+        }
+        
+        stage ('Build-Java Stage') {
+
+            steps {
+                    sh 'mvn clean install'
+            }
+        }
+        stage ('Sonar Code Check'){
+            steps {
+                echo "Do code quality check"
+            }
+        }
+        stage ('Create Docker Image'){
+            steps {
+                echo "Containerise the App"
+            }
+        }
+        stage ('Docker Security Scan'){
+            steps {
+                echo "Do image quality check"
+            }
+        }
+        stage ('Publish Artifacts'){
+            steps {
+                echo "Publish artifact to Artifactory"
+            }
+        }
+    }
+   post { 
+        always { 
+            echo 'Sending Email Notification'
+            emailext body: "${currentBuild.currentResult}: Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n More info at: ${env.BUILD_URL}",
+                recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']],
+                subject: "Jenkins Job: ${env.JOB_NAME} Build Number: ${env.BUILD_NUMBER} Status: ${currentBuild.currentResult}: "
+        
+        }
+    }
+}
