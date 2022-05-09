@@ -1,0 +1,48 @@
+@Library('shared-ci@main')_
+
+pipeline {
+    agent any
+    parameters {
+  listGitBranches branchFilter: 'refs/heads/(.*)', credentialsId: '2c8ee9e0-6907-4525-88f7-1ebc505f89a0', defaultValue: '', listSize: '5', name: 'git_branch', quickFilterEnabled: false, remoteURL: 'https://github.com/sugandhpasricha/springboot-1.git', selectedValue: 'NONE', sortMode: 'NONE', tagFilter: '*', type: 'PT_BRANCH'
+  string defaultValue: 'https://github.com/sugandhpasricha/springboot-1.git', name: 'git_url'
+     }
+    stages {
+        stage('SCM Checkout') {
+            steps{
+            scmClone(git_branch: "${git_branch}", git_url: "${git_url}")
+            }
+        }
+        
+        stage ('Build-Java Stage') {
+
+            steps {
+                buildMvn()
+            }
+        }
+        stage ('Sonar Code Check'){
+            steps {
+                sonarChecks()
+            }
+        }
+        stage ('Create Docker Image'){
+            steps {
+                dockerImage()
+            }
+        }
+        stage ('Docker Security Scan'){
+            steps {
+                imageCheck()
+            }
+        }
+        stage ('Publish Artifacts'){
+            steps {
+                publishArtifact()
+            }
+        }
+    }
+   post { 
+        always { 
+            emailNotification()
+        }
+    }
+}
